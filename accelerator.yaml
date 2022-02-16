@@ -1,0 +1,73 @@
+accelerator:
+  displayName: Spring Sensors
+  description: A Spring application for tracking sensor data
+  iconUrl: https://dashboard.snapcraft.io/site_media/appmedia/2018/11/indicator-sensors_r8EdpLP.png
+  tags:
+    - java
+    - spring
+    - tanzu
+
+  options:
+    - name: title
+      label: Title
+      display: true
+      description: Title text for the application
+      inputType: text
+      dataType: string
+      defaultValue: "Tanzu Sensor Database"
+
+    - name: gitUrl
+      label: Git Repository URL
+      display: true
+      description: Git Repository URL of the application's source code
+      inputType: text
+      dataType: string
+      defaultValue: "https://github.com/sample-accelerators/spring-sensors-rabbit.git"
+
+    - name: gitBranch
+      label: Git Repository Branch
+      display: true
+      description: Git Repository Branch of the application's source code
+      inputType: text
+      dataType: string
+      defaultValue: "main"
+
+    - name: publisherRepository
+      inputType: text
+      label: Name of repository to use for the publisher container image
+      defaultValue: index.docker.io/springdeveloper/spring-sensors-publisher
+      description: The repository name to use for the publisher image built as part of this sample. Specify server/repository that match what was specified for registry.server and registry.repository for ootb-supply-chain-basic.
+      required: true
+
+engine:
+  merge:
+    - include: [ "**" ]
+      exclude: [ "tap/workload.yaml", "demo/**", "src/main/resources/application.yaml", "catalog/*.yaml" ]
+    - include: [ "tap/workload.yaml" ]
+      chain:
+        - type: ReplaceText
+          substitutions:
+            - text: https://github.com/tanzu-end-to-end/spring-sensors.git
+              with: "#gitUrl"
+            - text: main
+              with: "#gitBranch"
+        - type: RewritePath
+          rewriteTo: "'config/' + #filename"
+    - include: [ "src/main/resources/application.yaml" ]
+      chain:
+        - type: ReplaceText
+          substitutions:
+             - text: Sensor Database
+               with: "#title"
+    - include: [ "demo/publisher-deployment.yaml", "demo/publisher-image.yaml" ]
+      chain:
+        - type: ReplaceText
+          substitutions:
+            - text: dev.local/spring-sensors-publisher
+              with: "#publisherRepository"
+    - include: [ "catalog/*.yaml" ]
+      chain:
+      - type: ReplaceText
+        substitutions:
+        - text: spring-sensors
+          with: "#artifactId"
